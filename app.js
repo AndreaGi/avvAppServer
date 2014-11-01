@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 var userController = require('./controllers/user');
 var clientController = require('./controllers/client');
 var categoryController = require('./controllers/category');
-var documentController = require('./controllers/document');
+var documentController = require('./controllers/documents');
 var authController = require('./controllers/auth');
 
 var configDB = require('./config/database.js');
