@@ -1,5 +1,6 @@
 // Load required packages
 var User = require('../models/user');
+var moment = require("moment");
 
 //Load the mailer
 var nodemailer = require('nodemailer');
@@ -13,28 +14,72 @@ var transporter = nodemailer.createTransport({
 });
 
 // Create endpoint /api/users for POST
-exports.postUsers = function(req, res) {
-    var user = new User({
-        email: req.body.email,
-        password: req.body.password,
-        activationCode: generateActivationString()
-    });
-
-    user.save(function(err) {
+exports.postUser = function(req, res) {
+    var existingUser;
+    User.findOne({ email: req.body.email}, function(err, existingUser) {
         if (err)
+            res.sendStatus(401);
+
+        if( existingUser == null ) {
+            var user = new User({
+                email: req.body.email,
+                password: req.body.password,
+                activationCode: generateActivationString()
+            });
+
+            user.save(function (err) {
+                if (err)
+                    res.send(err);
+
+                var emailToSend = getMailOptions(user.email, user.activationCode);
+                transporter.sendMail(emailToSend, function (error, info) {
+                    if (error)
+                        console.log(error);
+                    else
+                        console.log('Message sent: ' + info.response);
+                });
+
+                res.json({ code: 1 });
+
+            });
+        }else
+            var expires = moment().add('days', 7).valueOf();
+            var token = jwt.encode({
+                iss: user.id,
+                exp: expires
+            }, app.get('jwtTokenSecret'));
+
+            res.json({
+                code:0,
+                token: token,
+                expires:expires,
+                user:existingUser.toJSON()
+            });
+    });
+};
+
+// Activate an user
+exports.putUser = function(req, res){
+    User.findOne({email: req.body.email}, function(err, user){
+        if(err)
             res.send(err);
 
-        var emailToSend = getMailOptions(user.email, user.activationCode);
-        transporter.sendMail(emailToSend, function(error, info){
-            if(error){
-                console.log(error);
+        if( user != null){
+            if( user.activationCode === req.body.activationCode){
+                user.active = false;
+                User.update({email: req.body.email}, {
+                    activate: true
+                }, function(err, num, raw) {
+                        if (err)
+                            res.send(err);
+
+                    res.json({code:2});
+                });
             }else{
-                console.log('Message sent: ' + info.response);
+                res.json({code:1});
             }
-        });
-
-        res.json({ message: 'Ti è stata inviata una mail col codice di attivazione dell.account.' });
-
+        }else
+            res.json({code:0});
     });
 };
 

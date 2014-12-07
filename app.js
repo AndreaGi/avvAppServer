@@ -9,18 +9,19 @@ var userController = require('./controllers/user');
 var clientController = require('./controllers/client');
 var categoryController = require('./controllers/category');
 var documentController = require('./controllers/documents');
-var authController = require('./controllers/auth');
+var jwtAuth = require('./controllers/jwauth');
 
 var configDB = require('./config/database.js');
 
 // configuration
-mongoose.connect(configDB.url); // connect to our database
+mongoose.connect(configDB.url); // connect to the database
 
 var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+app.set('jwtTokenSecret', 'avvAppSecretToken');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
@@ -34,35 +35,36 @@ app.use(passport.initialize());
 var router = express.Router();
 
 router.route("/users")
-    .post(userController.postUsers)
-    .get(authController.isAuthenticated, userController.getUsers);
+    .put(userController.putUser)
+    .post(userController.postUser)
+    .get([bodyParser.json(), jwtAuth], userController.getUsers);
 
 router.route("/clients")
-    .post(authController.isAuthenticated, clientController.postClients)
-    .get(authController.isAuthenticated, clientController.getClients);
+    .post([bodyParser.json(), jwtAuth], clientController.postClients)
+    .get([bodyParser.json(), jwtAuth], clientController.getClients);
 
 router.route("/clients/:client_id")
-    .get(authController.isAuthenticated, clientController.getClient)
-    .put(authController.isAuthenticated, clientController.putClient)
-    .delete(authController.isAuthenticated, clientController.deleteClient);
+    .get([bodyParser.json(), jwtAuth], clientController.getClient)
+    .put([bodyParser.json(), jwtAuth], clientController.putClient)
+    .delete([bodyParser.json(), jwtAuth], clientController.deleteClient);
 
 router.route("/categories")
-    .post(authController.isAuthenticated, categoryController.postCategories)
-    .get(authController.isAuthenticated, categoryController.getCategories);
+    .post([bodyParser.json(), jwtAuth], categoryController.postCategories)
+    .get([bodyParser.json(), jwtAuth], categoryController.getCategories);
 
 router.route("/categories/:category_id")
-    .get(authController.isAuthenticated, categoryController.getCategory)
-    .put(authController.isAuthenticated, categoryController.putCategory)
-    .delete(authController.isAuthenticated, categoryController.deleteCategory);
+    .get([bodyParser.json(), jwtAuth], categoryController.getCategory)
+    .put([bodyParser.json(), jwtAuth], categoryController.putCategory)
+    .delete([bodyParser.json(), jwtAuth], categoryController.deleteCategory);
 
 router.route("/documents")
-    .post(authController.isAuthenticated, documentController.postDocuments)
-    .get(authController.isAuthenticated, documentController.getDocuments);
+    .post([bodyParser.json(), jwtAuth], documentController.postDocuments)
+    .get([bodyParser.json(), jwtAuth], documentController.getDocuments);
 
 router.route("/documents/:document_id")
-    .get(authController.isAuthenticated, documentController.getDocument)
-    .put(authController.isAuthenticated, documentController.putDocument)
-    .delete(authController.isAuthenticated, documentController.deleteDocument);
+    .get([bodyParser.json(), jwtAuth], documentController.getDocument)
+    .put([bodyParser.json(), jwtAuth], documentController.putDocument)
+    .delete([bodyParser.json(), jwtAuth], documentController.deleteDocument);
 
 app.use('/api', router);
 var apiPort = 3000;
