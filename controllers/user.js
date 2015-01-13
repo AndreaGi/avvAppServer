@@ -1,6 +1,8 @@
 // Load required packages
 var User = require('../models/user');
 var moment = require("moment");
+var jwt = require("jwt-simple");
+var config = require('../config/config-dev');
 
 //Load the mailer
 var nodemailer = require('nodemailer');
@@ -8,19 +10,40 @@ var nodemailer = require('nodemailer');
 var transporter = nodemailer.createTransport({
     service: 'Gmail',
     auth: {
-        user: 'avvapp.noreply@gmail.com',
-        pass: ''
+        user: config.email.address,
+        pass: config.email.password
     }
 });
 
 // Create endpoint /api/users for POST
 exports.postUser = function(req, res) {
     var existingUser;
-    User.findOne({ email: req.body.email}, function(err, existingUser) {
+    var query = User.where({email:req.body.email});
+    query.findOne( function(err, existingUser) {
         if (err)
-            res.sendStatus(401);
+            res.json({ code: 2 });
 
-        if( existingUser == null ) {
+        if( existingUser ) {
+
+            if(existingUser.active) {
+                var expires = moment().add('days', 7).valueOf();
+                var token = jwt.encode({
+                    iss: user.id,
+                    exp: expires
+                }, app.get('jwtTokenSecret'));
+
+                res.json({
+                    code: 0,
+                    token: token,
+                    expires: expires,
+                    user: existingUser.toJSON()
+                });
+            }else{
+                res.json({ code: 2 });
+            }
+
+        }else {
+
             var user = new User({
                 email: req.body.email,
                 password: req.body.password,
@@ -42,19 +65,8 @@ exports.postUser = function(req, res) {
                 res.json({ code: 1 });
 
             });
-        }else
-            var expires = moment().add('days', 7).valueOf();
-            var token = jwt.encode({
-                iss: user.id,
-                exp: expires
-            }, app.get('jwtTokenSecret'));
 
-            res.json({
-                code:0,
-                token: token,
-                expires:expires,
-                user:existingUser.toJSON()
-            });
+        }
     });
 };
 

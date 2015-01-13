@@ -9,7 +9,7 @@ var userSchema = new mongoose.Schema({
     activationCode   : String,
     active       : {type: Boolean, default:false},
     showComplete: {type:Boolean, default:true}
-});
+}, { collection: 'user' });
 
 // generating a hash
 userSchema.methods.generateHash = function(password) {

@@ -11,7 +11,7 @@ var documentSchema   = new mongoose.Schema({
     creationDate: {type:Date, default:Date.now},
     modificationDate: {type:Date, default:Date.now},
     userId      :String
-});
+}, { collection: 'document' });
 
 // Export the Mongoose model
 module.exports = mongoose.model('Document', documentSchema);

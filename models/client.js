@@ -8,7 +8,7 @@ var clientSchema   = new mongoose.Schema({
     creationDate: {type:Date, default:Date.now},
     modificationDate: {type:Date, default:Date.now},
     userId      :String
-});
+}, { collection: 'client' });
 
 // Export the Mongoose model
 module.exports = mongoose.model('Client', clientSchema);

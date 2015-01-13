@@ -7,7 +7,7 @@ var categorySchema   = new mongoose.Schema({
     color:  String,
     order:  Number,
     userId: String
-});
+}, { collection: 'category' });
 
 // Export the Mongoose model
 module.exports = mongoose.model('Category', categorySchema);
