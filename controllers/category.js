@@ -3,6 +3,7 @@
  */
 // Load required packages
 var Category = require('../models/category');
+var httpStatus = require('http-status-codes');
 
 // Create endpoint /api/categories for POST
 exports.postCategories= function(req, res) {
@@ -13,61 +14,52 @@ exports.postCategories= function(req, res) {
     category.name = req.body.name;
     category.color = req.body.color;
     category.order = req.body.order;
-    category.userId = req.user._id;
+    category.userId = res.userId;
 
-    // Save the categorys and check for errors
+    // Save the categories and check for errors
     category.save(function(err) {
-        if (err)
-            res.send(err);
-
-        res.json({ message: 'Category saved!', data: category });
+        if (err) res.end(err, httpStatus.INTERNAL_SERVER_ERROR);
+        res.status(httpStatus.OK).json({result : category});
     });
 };
 
 // Create endpoint /api/categories for GET
 exports.getCategories = function(req, res) {
     // Use the Category model to find all category
-    Category.find({ userId: req.user._id }, function(err, categorys) {
-        if (err)
-            res.send(err);
-
-        res.json(categorys);
+    Category.find({ userId: res.userId }, function(err, categories) {
+        if (err) res.end(err, httpStatus.INTERNAL_SERVER_ERROR);
+        res.status(httpStatus.OK).json({result : categories});
     });
 };
 
-// Create endpoint /api/categorys/:category_id for GET
+// Create endpoint /api/categories/:category_id for GET
 exports.getCategory = function(req, res) {
     // Use the Category model to find a specific category
-    Category.find({ userId: req.user._id, _id: req.params.category_id }, function(err, category) {
-        if (err)
-            res.send(err);
-
-        res.json(category);
+    Category.findOne({ _id: req.params.category_id }, function(err, category) {
+        if (err) res.end(err, httpStatus.INTERNAL_SERVER_ERROR);
+        res.status(httpStatus.OK).json({result : category});
     });
 };
 
-// Create endpoint /api/categorys/:category_id for PUT
+// Create endpoint /api/categories/:category_id for PUT
 exports.putCategory = function(req, res) {
     // Use the Category model to find a specific category
-    Category.update({ userId: req.user._id, _id: req.params.category_id }, {
+    Category.findByIdAndUpdate(req.params.category_id,{ $set: {
         name : req.body.name,
         color : req.body.color,
         order : req.body.order
-    }, function(err, num, raw) {
-        if (err)
-            res.send(err);
+    }}, function(err, category) {
+        if (err) res.status(httpStatus.INTERNAL_SERVER_ERROR).end(err.message);
 
-        res.json({ message: num + ' updated' });
+        res.status(httpStatus.OK).json({ result : category });
     });
 };
 
-// Create endpoint /api/categorys/:category_id for DELETE
+// Create endpoint /api/categories/:category_id for DELETE
 exports.deleteCategory = function(req, res) {
     // Use the Category model to find a specific category and remove it
-    Category.remove({ userId: req.user._id, _id: req.params.category_id }, function(err) {
-        if (err)
-            res.send(err);
-
-        res.json({ message: 'Category removed' });
+    Category.remove({ _id: req.params.category_id }, function(err) {
+        if (err) res.end(err, httpStatus.INTERNAL_SERVER_ERROR);
+        res.status(httpStatus.OK).json({ message: 'Category removed' });
     });
 };

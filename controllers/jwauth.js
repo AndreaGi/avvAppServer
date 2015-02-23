@@ -2,26 +2,27 @@
 
 var User = require("../models/user");
 var jwt = require("jwt-simple");
+var config = require('../config/config-dev');
+var httpStatus = require('http-status-codes');
 
-module.exports = function(req, res){
+module.exports = function(req, res, next){
     var token = (req.body && req.body.access_token) || (req.query && req.query.access_token) || req.headers['x-access-token'];
 
     if(token) {
         try {
-            var decoded = jwt.decode(token, app.get('jwtTokenSecret'));
+            var decoded = jwt.decode(token, config.secretToken);
 
             if (decoded.exp <= Date.now()) {
-                res.end('Access token has expired', 400);
+                res.end('Access token has expired', httpStatus.BAD_REQUEST);
             }
 
-            User.findOne({ _id: decoded.iss }, function(err, user) {
-                req.user = user;
-            });
+            res.userId = decoded.iss;
+            return next();
 
         } catch (err) {
-            return next;
+            return next();
         }
     }else{
-        res.sendStatus(401);
+        res.sendStatus(httpStatus.UNAUTHORIZED);
     }
 }
